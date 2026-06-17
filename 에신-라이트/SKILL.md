@@ -88,7 +88,7 @@ version: "1.4"
 - 산출 = **로컬 설치형 데스크톱 에이전트**. 반드시:
   - `engine.py` — LLM 호출 본체. **기본값 = `claude` CLI(구독) 1순위 → `gemini` CLI 폴백.** API 직접호출은 배포용만. 구독 강제 = 호출 전 환경의 `ANTHROPIC_API_KEY`를 제거하는 헬퍼(`_sub_env`)로 호출(무효 키가 API 모드로 끌려가 막히는 사고 차단). CLI는 임시 디렉터리(`tempfile.gettempdir()`)를 `cwd`로(세션로그가 에이전트 폴더 오염 방지). 첫 줄 `sys.stdout/stdin.reconfigure(encoding="utf-8")`.
   - `run.bat` — `chcp 65001>nul` · `set PYTHONUTF8=1` · `set PYTHONIOENCODING=utf-8` · `pushd "%~dp0"` · `pause` · **한글 echo 금지**.
-  - `install_shortcut.ps1` — **바탕화면 설치(필수)**. ⚠️ **UTF-8 BOM 저장**(PowerShell 5.1이 BOM 없는 UTF-8을 cp949로 오독 → 한글 .lnk 이름 깨짐/COM 에러). 본체 폴더와 바로가기를 **둘 다 `Desktop\AI 에이전트\` 안**에: 본체 `Desktop\AI 에이전트\{이름}\`, 바로가기 `Desktop\AI 에이전트\{이름}.lnk`. 바로가기 타깃은 **클래식 콘솔 강제** `conhost.exe` + `cmd /c "run.bat"`(Windows Terminal 탭으로 숨거나 창이 안 보이는 문제 방지).
+  - `install_shortcut.ps1` — **바탕화면 설치(필수)**. ⚠️ **UTF-8 BOM 저장**(PowerShell 5.1이 BOM 없는 UTF-8을 cp949로 오독 → 한글 .lnk 이름 깨짐/COM 에러). 본체 폴더와 바로가기를 **둘 다 `Desktop\AI 에이전트\` 안**에: 본체 `Desktop\AI 에이전트\{이름}\`, 바로가기 `Desktop\AI 에이전트\{이름}.lnk`. **바로가기 타깃 = `cmd.exe`, 인자 = `/c "run.bat"`**(전체 경로 따옴표, WorkDir=본체 폴더). 더블클릭 시 콘솔 창이 떠서 실행됨. ⚠️ **`conhost.exe`를 바로가기 타깃으로 직접 쓰지 말 것** — 실행 자체가 안 되는 환경이 있다.
 - (슬래시 SKILL.md만 만드는 건 "터미널 안에서만 쓰는 도구"라고 명시할 때만 예외.)
 - **DB·웹 호스팅·포털 산출물 없음.** 🔴 컷한 자리는 자체 작성.
 
