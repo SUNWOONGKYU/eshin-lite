@@ -85,8 +85,13 @@ version: "1.4"
   - **③ 도구(Tools)** — 입력 읽기·저장 등 실제 도구(해당 시). 없으면 "LLM 단독"임을 명시
   - **④ 메모리(Memory)** — 직전 결과 기억(작업기억, 수정 반복용) + 처리 이력 파일 누적(장기기억)
   - **⑤ 자율 자가점검 루프(Loop)** — 생성 직후 **출력 필수요소·요청 반영 여부를 스스로 점검해 부족하면 보완(bounded, 최대 N회·기본 3)**. ⚠️ *가벼운 자가점검까지가 라이트* — 복잡한 상태머신·다중 에이전트 루프는 본체.
+- **결과 확인·저장 (필수, 생략 금지)** — "결과가 어디 있는지 못 찾는" 사고를 막는다.
+  - 생성 완료 즉시 결과 파일을 **기본 뷰어로 자동으로 연다**(`os.startfile(path)` — Windows).
+  - **저장 위치는 사용자가 고를 수 있게 한다**: `tkinter.filedialog.asksaveasfilename`(표준 라이브러리, 추가 설치 불필요)로 저장 대화상자를 띄우고, 사용자가 취소하면 에이전트 폴더의 기본 위치에 저장한다.
+  - 콘솔에도 최종 저장 경로를 굵게/구분선으로 눈에 띄게 출력한다.
 - 산출 = **로컬 설치형 데스크톱 에이전트**. 반드시:
   - `engine.py` — LLM 호출 본체. **기본값 = `claude` CLI(구독) 1순위 → `gemini` CLI 폴백.** API 직접호출은 배포용만. 구독 강제 = 호출 전 환경의 `ANTHROPIC_API_KEY`를 제거하는 헬퍼(`_sub_env`)로 호출(무효 키가 API 모드로 끌려가 막히는 사고 차단). CLI는 임시 디렉터리(`tempfile.gettempdir()`)를 `cwd`로(세션로그가 에이전트 폴더 오염 방지). 첫 줄 `sys.stdout/stdin.reconfigure(encoding="utf-8")`.
+    ⚠️ **Windows에서 CLI 경로는 `shutil.which()`로 찾고, 프롬프트는 명령행 인자가 아니라 `subprocess.run(..., input=prompt_text)`로 stdin 전달할 것.** `claude`/`gemini`는 npm 설치 시 `.cmd` 배치파일이라 Windows가 내부적으로 cmd.exe를 거쳐 실행하는데, 프롬프트에 HTML 태그 등 `<`·`>`가 있으면 인자로 넘길 때 cmd.exe가 리다이렉션 기호로 오인해 내용이 깨진다(2026-07-07 실전 확인). 같은 이유로 `stdin=subprocess.DEVNULL`도 피하고(입력 자체를 stdin으로 주므로 불필요), 인자 전달은 아예 쓰지 않는다.
   - `run.bat` — `chcp 65001>nul` · `set PYTHONUTF8=1` · `set PYTHONIOENCODING=utf-8` · `pushd "%~dp0"` · `pause` · **한글 echo 금지**.
   - `install_shortcut.ps1` — **바탕화면 설치(필수)**. ⚠️ **UTF-8 BOM 저장**(PowerShell 5.1이 BOM 없는 UTF-8을 cp949로 오독 → 한글 .lnk 이름 깨짐/COM 에러). 본체 폴더와 바로가기를 **둘 다 `Desktop\AI 에이전트\` 안**에: 본체 `Desktop\AI 에이전트\{이름}\`, 바로가기 `Desktop\AI 에이전트\{이름}.lnk`. **바로가기 타깃 = `cmd.exe`, 인자 = `/c "run.bat"`**(전체 경로 따옴표, WorkDir=본체 폴더). 더블클릭 시 콘솔 창이 떠서 실행됨. ⚠️ **`conhost.exe`를 바로가기 타깃으로 직접 쓰지 말 것** — 실행 자체가 안 되는 환경이 있다.
 - (슬래시 SKILL.md만 만드는 건 "터미널 안에서만 쓰는 도구"라고 명시할 때만 예외.)
