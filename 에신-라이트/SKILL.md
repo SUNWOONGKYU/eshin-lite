@@ -50,7 +50,7 @@ V1.7 (2026-08-01) — 공개본 V1.6 ↔ 로컬 병합 + 본체 V3.9 동기화
 
 ## 💳 LLM 호출 비용 원칙 (제작 ↔ 런타임 분리 — 반드시 지킴)
 **"에이전트를 만드는 것"과 "만들어진 에이전트가 돌아가는 것"은 완전히 별개다. 인프라 A/B는 *런타임*에만 해당하지, 제작과는 무관하다.**
-- **제작·검증 LLM = 항상 구독(클로드 코드 본체).** 기획·조립·실호출 검증은 전부 로컬·구독으로. **A/B 불문, 제작·검증에 API 키·크레딧 사용 금지.** (검증하려고 API 호출 → 크레딧 벽에 막히는 사고 — 2026-06-14 고문서 해석기 회고.)
+- **제작·검증 LLM = 항상 구독(클로드 코드 본체).** 기획·조립·실호출 검증은 전부 로컬·구독으로. **A/B 불문, 제작·검증에 API 키·크레딧 사용 금지.** (검증하려고 API 호출 → 크레딧 벽에 막히는 사고 — 2026-06-14 고문서 해석 에이전트 회고.)
 - **산출 에이전트의 런타임 LLM** = **B(로컬)→본인이 쓰면 `claude` CLI(구독 OAuth) 1순위**, 남에게 배포하면 그 사람 키. (포털 A·API 키 런타임은 본체 영역.)
 
 ---
@@ -99,7 +99,7 @@ V1.7 (2026-08-01) — 공개본 V1.6 ↔ 로컬 병합 + 본체 V3.9 동기화
   - 다른 위치에 저장하고 싶으면 열린 결과 파일을 사용자가 직접 복사·이동하면 된다 — 이 정도는 에이전트가 대신할 필요 없음.
   - 콘솔에도 최종 저장 경로를 굵게·구분선으로 눈에 띄게 출력한다. (GUI를 함께 낸 경우 화면에도 저장 경로 + "폴더 열기" 버튼을 둔다.)
 - 산출 = **로컬 설치형 데스크톱 에이전트**. 반드시:
-  - `engine.py` — LLM 호출 본체. **기본값 = `claude` CLI(구독) 1순위 → `gemini` CLI 폴백.** API 직접호출은 배포용만. 구독 강제 = `_sub_env()`로 `ANTHROPIC_API_KEY` 제거 후 호출, CLI는 `cwd=tempfile.gettempdir()`(세션로그 격리). 첫 줄 `sys.stdout/stdin.reconfigure(encoding="utf-8")`. 참조 구현(제작자 로컬 예시 — 경로가 없으면 위 서술만으로 충분): `C:\Dev\agents\historical-record-interpreter\engine.py`.
+  - `engine.py` — LLM 호출 본체. **기본값 = `claude` CLI(구독) 1순위 → `gemini` CLI 폴백.** API 직접호출은 배포용만. 구독 강제 = `_sub_env()`로 `ANTHROPIC_API_KEY` 제거 후 호출, CLI는 `cwd=tempfile.gettempdir()`(세션로그 격리). 첫 줄 `sys.stdout/stdin.reconfigure(encoding="utf-8")`. 참조 구현(제작자 로컬 예시 — 경로가 없으면 위 서술만으로 충분): `{작업폴더}\{에이전트이름}\engine.py`.
     ⚠️ **Windows에서 CLI 경로는 `shutil.which()`로 찾고, 프롬프트는 명령행 인자가 아니라 `subprocess.run(..., input=prompt_text)`로 stdin 전달할 것.** `claude`·`gemini`는 npm 설치 시 `.cmd` 배치파일이라 Windows가 내부적으로 cmd.exe를 거쳐 실행하는데, 프롬프트에 HTML 태그 등 `<`·`>`가 있으면 인자로 넘길 때 cmd.exe가 리다이렉션 기호로 오인해 내용이 깨진다(2026-07-07 실전 확인). 같은 이유로 `stdin=subprocess.DEVNULL`도 피하고(입력 자체를 stdin으로 주므로 불필요), 인자 전달은 아예 쓰지 않는다.
   - `run.py` — 터미널 진입점(GUI 못 쓰는 환경 대비, 병행 유지. GUI를 내더라도 삭제하지 않는다).
   - `run.bat` — **터미널 전용 보조 진입점**(`run.py` 실행). `chcp 65001>nul` · `set PYTHONUTF8=1` · `set PYTHONIOENCODING=utf-8` · `pushd "%~dp0"` · `pause` · **한글 echo 금지**. ⚠️ GUI를 내는 경우(아래) 사용자에게 더블클릭하라고 안내하는 진입점은 `시작.bat` 하나뿐이다 — `run.bat`은 GUI 없는 환경(서버·SSH·접근성 도구)에서 터미널로 직접 돌릴 때만 쓰고 전면에 노출하지 않는다.
