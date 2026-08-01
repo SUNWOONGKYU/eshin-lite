@@ -102,8 +102,9 @@ V1.7 (2026-08-01) — 공개본 V1.6 ↔ 로컬 병합 + 본체 V3.9 동기화
   - `engine.py` — LLM 호출 본체. **기본값 = `claude` CLI(구독) 1순위 → `gemini` CLI 폴백.** API 직접호출은 배포용만. 구독 강제 = `_sub_env()`로 `ANTHROPIC_API_KEY` 제거 후 호출, CLI는 `cwd=tempfile.gettempdir()`(세션로그 격리). 첫 줄 `sys.stdout/stdin.reconfigure(encoding="utf-8")`. 참조 구현(제작자 로컬 예시 — 경로가 없으면 위 서술만으로 충분): `C:\Dev\agents\historical-record-interpreter\engine.py`.
     ⚠️ **Windows에서 CLI 경로는 `shutil.which()`로 찾고, 프롬프트는 명령행 인자가 아니라 `subprocess.run(..., input=prompt_text)`로 stdin 전달할 것.** `claude`·`gemini`는 npm 설치 시 `.cmd` 배치파일이라 Windows가 내부적으로 cmd.exe를 거쳐 실행하는데, 프롬프트에 HTML 태그 등 `<`·`>`가 있으면 인자로 넘길 때 cmd.exe가 리다이렉션 기호로 오인해 내용이 깨진다(2026-07-07 실전 확인). 같은 이유로 `stdin=subprocess.DEVNULL`도 피하고(입력 자체를 stdin으로 주므로 불필요), 인자 전달은 아예 쓰지 않는다.
   - `run.py` — 터미널 진입점(GUI 못 쓰는 환경 대비, 병행 유지. GUI를 내더라도 삭제하지 않는다).
-  - `run.bat` — `chcp 65001>nul` · `set PYTHONUTF8=1` · `set PYTHONIOENCODING=utf-8` · `pushd "%~dp0"` · `pause` · **한글 echo 금지**.
-  - **★V1.3 로컬 GUI (인프라 B + 사람 개입형이면 기본 산출물)** — `ui.py` + `ui/index.html`. 파이썬 **표준 라이브러리만**(`http.server`) — Flask·FastAPI·Streamlit 도입 금지. `시작.bat` 이 `ui.py` 를 띄우는 더블클릭 진입점.
+  - `run.bat` — **터미널 전용 보조 진입점**(`run.py` 실행). `chcp 65001>nul` · `set PYTHONUTF8=1` · `set PYTHONIOENCODING=utf-8` · `pushd "%~dp0"` · `pause` · **한글 echo 금지**. ⚠️ GUI를 내는 경우(아래) 사용자에게 더블클릭하라고 안내하는 진입점은 `시작.bat` 하나뿐이다 — `run.bat`은 GUI 없는 환경(서버·SSH·접근성 도구)에서 터미널로 직접 돌릴 때만 쓰고 전면에 노출하지 않는다.
+  - **★V1.3 로컬 GUI (인프라 B + 사람 개입형이면 기본 산출물)** — `ui.py` + `ui/index.html`. 파이썬 **표준 라이브러리만**(`http.server`) — Flask·FastAPI·Streamlit 도입 금지. `시작.bat`이 `ui.py`를 띄우는 **유일한 더블클릭 진입점**(이 경우 `run.bat`은 전면에 내세우지 않는다).
+    **엔진 연동**: 기본은 `engine.py`를 모듈로 `import`해 함수 호출(같은 프로세스, 상태 공유 쉬움). 장시간 호출·크래시 격리가 필요하면 `subprocess` 분리 실행(이 경우 `ui.py` 종료 시 자식 프로세스 정리 필수). 라우트 계약·폴링/스트리밍 등 연동 규격 상세는 **본체 `/에신` SKILL.md 「★ V3.9 로컬 GUI(웹) 출하 표준」의 "`ui.py` ↔ `engine.py` 연동 규격" 참조.**
     **경량판에서도 생략 불가 (보안 항목 — 압축 대상 아님)**: ① **루프백 전용 바인딩** `ThreadingHTTPServer(("127.0.0.1", port), ...)`, `0.0.0.0` 금지 ② **토큰 인증 + 쿠키 승격** — 실행마다 `secrets.token_urlsafe(24)`, 최초 접속 `?t=<토큰>` → 쿠키(`HttpOnly; SameSite=Strict`)로 옮기고 `302`로 깨끗한 주소 ③ **경로 탈출 차단** — 작업 폴더 밖이면 `403`, 업로드 파일명은 `Path(name).name` + `[<>:"/\\|?*]` 치환.
     나머지 세부(고정 포트 폴백·덮어쓰기 금지·조용한 종료·favicon 204·종료 안내 / CDN 금지·시스템 폰트·라이트다크·tabular-nums·유의사항 블록·준비 상태 패널·업로드 3종·접근성·"AI 티" 금지 디자인)는 **본체 `/에신` SKILL.md 「★ V3.9 로컬 GUI(웹) 출하 표준」 참조.**
   - ⛔ **바탕화면 바로가기 자동 생성 금지** (V1.3 — 본체 V3.9 R7·R8 폐지 동기화, 운영자 판단 2026-08-01). `install_shortcut.ps1` 제조하지 않는다. 원하는 사용자 안내는 README 한 줄로만: "바탕화면에 두고 싶으면 `시작.bat` 을 오른쪽 눌러 「바로 가기 만들기」."
@@ -118,7 +119,7 @@ V1.7 (2026-08-01) — 공개본 V1.6 ↔ 로컬 병합 + 본체 V3.9 동기화
 - 결함 회귀: 문구→L4 / 부품→L3 / 정책·KPI→L2.
 
 ### L6. 자산화·출하
-- 설치 폴더에 engine·`run.py`·run.bat·README 배치. 사람 개입형이면 `ui.py`·`ui/index.html`·`시작.bat`·`requirements.txt` 추가.
+- 설치 폴더에 engine·`run.py`·`run.bat`(터미널 전용 보조)·README 배치. 사람 개입형이면 `ui.py`·`ui/index.html`·`시작.bat`(유일한 더블클릭 진입점)·`requirements.txt` 추가 — 이 경우 사용자에게는 `시작.bat`만 안내한다.
 - **★ 진입점 확인(필수)**: 폴더 안 `시작.bat` 더블클릭 → `ui.py` 기동 → 브라우저가 `http://localhost:{포트}` 로 열리고 주요 버튼이 실제로 눌리는지 확인. (GUI 대상인데 화면 확인 없이 "출하 완료" 금지 — "서버 200 ≠ 동작함".) 터미널 진입점(`run.py`)도 병행 유지.
 - **더블클릭/실호출 재확인**으로 동작 확인.
 - **포털 출시(DB·카드·페이지·배포) 안 함** — 필요하면 본체.
